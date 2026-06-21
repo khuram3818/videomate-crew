@@ -46,19 +46,22 @@ jobs:
         working-directory: app
         run: |
           yes | buildozer android debug 2>&1 | tee build.log
-          echo "=== Searching for APK everywhere ==="
-          find / -name "*.apk" 2>/dev/null || true
-          echo "=== bin folder ==="
-          ls -lhR bin/ 2>/dev/null || echo "no bin folder"
-          echo "=== buildozer folder ==="
-          ls -lhR .buildozer/android/platform/build*/dists/*/bin/ 2>/dev/null || true
+          echo "=== Searching for APK ==="
+          find $HOME -name "*.apk" 2>/dev/null || true
+          find $(pwd) -name "*.apk" 2>/dev/null || true
+          find /home -name "*.apk" 2>/dev/null || true
+          echo "=== Done searching ==="
 
-      - name: Find and upload APK
+      - name: Collect APK
+        working-directory: app
         run: |
-          APK=$(find . -name "*.apk" 2>/dev/null | head -1)
-          echo "Found APK: $APK"
-          cp "$APK" VMC3.0.apk
-          ls -lh VMC3.0.apk
+          APK=$(find $HOME -name "*.apk" 2>/dev/null | head -1)
+          if [ -z "$APK" ]; then
+            APK=$(find / -maxdepth 10 -name "*.apk" 2>/dev/null | head -1)
+          fi
+          echo "APK found at: $APK"
+          cp "$APK" $GITHUB_WORKSPACE/VMC3.0.apk
+          ls -lh $GITHUB_WORKSPACE/VMC3.0.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
