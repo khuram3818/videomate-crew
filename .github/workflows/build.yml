@@ -42,25 +42,29 @@ jobs:
           pip install --upgrade pip
           pip install buildozer==1.5.0 cython==0.29.37
 
-      - name: Build APK
+      - name: Build APK and collect
         working-directory: app
         run: |
           yes | buildozer android debug 2>&1 | tee build.log
-          echo "=== Searching for APK ==="
-          find $HOME -name "*.apk" 2>/dev/null || true
-          find $(pwd) -name "*.apk" 2>/dev/null || true
-          find /home -name "*.apk" 2>/dev/null || true
-          echo "=== Done searching ==="
 
-      - name: Collect APK
-        working-directory: app
-        run: |
-          APK=$(find $HOME -name "*.apk" 2>/dev/null | head -1)
+          echo ""
+          echo "====== FIND ALL APK FILES ======"
+          find / -name "*.apk" 2>/dev/null
+          echo "====== END ======"
+
+          echo ""
+          echo "====== BUILD LOG TAIL ======"
+          tail -50 build.log
+          echo "====== END ======"
+
+          APK=$(find / -name "*.apk" 2>/dev/null | grep -v "^/proc" | head -1)
           if [ -z "$APK" ]; then
-            APK=$(find / -maxdepth 10 -name "*.apk" 2>/dev/null | head -1)
+            echo "ERROR: No APK found!"
+            exit 1
           fi
-          echo "APK found at: $APK"
+          echo "Found: $APK"
           cp "$APK" $GITHUB_WORKSPACE/VMC3.0.apk
+          echo "Copied to workspace"
           ls -lh $GITHUB_WORKSPACE/VMC3.0.apk
 
       - name: Upload APK
